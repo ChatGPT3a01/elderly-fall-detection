@@ -8,16 +8,16 @@
 
 > **製作人：** 曾楚庭 | **指導老師：** 曾慶良
 
-點擊下方連結觀看教學簡報（使用 GitHub Pages 部署後可直接瀏覽）：
+### [👉 點我開啟教學簡報](https://chatgpt3a01.github.io/elderly-fall-detection/slides/index.html)
 
 | 簡報 | 說明 |
 |------|------|
-| [首頁總覽](slides/index.html) | 課程總覽與功能特色 |
-| [Part 1 - 專案介紹](slides/Part1_專案介紹.html) | 專案背景與系統目標 |
-| [Part 2 - 系統架構](slides/Part2_系統架構.html) | 架構設計與技術解析 |
-| [Part 3 - 環境安裝](slides/Part3_環境安裝.html) | Python 環境與套件安裝 |
-| [Part 4 - LINE Bot 設定](slides/Part4_LINE_Bot設定.html) | LINE Developer 設定教學 |
-| [Part 5 - 執行操作](slides/Part5_執行操作.html) | 系統執行與操作指南 |
+| [首頁總覽](https://chatgpt3a01.github.io/elderly-fall-detection/slides/index.html) | 課程總覽與功能特色 |
+| [Part 1 - 專案介紹](https://chatgpt3a01.github.io/elderly-fall-detection/slides/Part1_專案介紹.html) | 專案背景與系統目標 |
+| [Part 2 - 系統架構](https://chatgpt3a01.github.io/elderly-fall-detection/slides/Part2_系統架構.html) | 架構設計與技術解析 |
+| [Part 3 - 環境安裝](https://chatgpt3a01.github.io/elderly-fall-detection/slides/Part3_環境安裝.html) | Python 環境與套件安裝 |
+| [Part 4 - LINE Bot 設定](https://chatgpt3a01.github.io/elderly-fall-detection/slides/Part4_LINE_Bot設定.html) | LINE Developer 設定教學 |
+| [Part 5 - 執行操作](https://chatgpt3a01.github.io/elderly-fall-detection/slides/Part5_執行操作.html) | 系統執行與操作指南 |
 
 ---
 
