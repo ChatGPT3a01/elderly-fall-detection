@@ -1,0 +1,68 @@
+╔══════════════════════════════════════════════════════════════╗
+║        樂齡防傾倒 LINE Bot 通知系統 - 快速開始指南           ║
+╚══════════════════════════════════════════════════════════════╝
+
+【步驟一】安裝套件
+─────────────────
+1. 開啟命令提示字元 (按 Win+R，輸入 cmd，按 Enter)
+2. 進入專案資料夾：
+   cd "D:\20251206\elderly_fall_detection"
+3. 建立虛擬環境（建議）：
+   python -m venv venv
+   venv\Scripts\activate
+4. 安裝套件：
+   pip install -r requirements.txt
+
+
+【步驟二】設定 LINE 通知
+───────────────────────
+1. 前往 https://developers.line.biz/console/
+2. 登入 LINE 帳號
+3. 建立 Provider → 建立 Messaging API Channel
+4. 取得：
+   - Channel Access Token（在 Messaging API 頁籤）
+   - Channel Secret（在 Basic settings 頁籤）
+   - Your User ID（在 Basic settings 頁籤）
+5. 複製範本檔案：
+   copy .env.example .env
+6. 用記事本打開 .env 檔案，填入金鑰
+
+
+【步驟三】執行程式
+───────────────────
+執行：python app.py
+
+* 畫面左上角顯示即時資訊（FPS、角度、狀態）
+* 站立時按 c 鍵校準（建立基準線）
+* 傾斜身體時會計算軀幹傾斜角度
+* 偵測到跌倒會發送 LINE 通知
+* 截圖儲存在 screenshots 資料夾
+* 按 q 鍵或 ESC 退出
+
+
+【快捷鍵】
+─────────
+q / ESC  - 退出程式
+c        - 校準（站立時按）
+r        - 重置警報冷卻時間
+s        - 手動截圖
+
+
+【設定檔說明】
+─────────────
+config.json - 偵測參數設定
+  - torso_angle_threshold: 軀幹傾斜角度閾值（預設 35°）
+  - consecutive_frames_threshold: 連續幀數確認（預設 5）
+  - cooldown_seconds: 警報冷卻時間（預設 30 秒）
+
+
+【常用指令】
+───────────
+執行主程式：python app.py
+指定攝影機：python app.py --camera 1
+指定設定檔：python app.py --config config.json
+
+
+【遇到問題？】
+─────────────
+詳細說明請參閱「安裝教學.md」或「README.md」檔案

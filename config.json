@@ -1,0 +1,27 @@
+{
+    "line_bot": {
+        "channel_access_token": "YOUR_CHANNEL_ACCESS_TOKEN",
+        "channel_secret": "YOUR_CHANNEL_SECRET",
+        "user_id": "YOUR_USER_ID"
+    },
+    "detection": {
+        "torso_angle_threshold": 35,
+        "head_drop_threshold": 100,
+        "center_shift_threshold": 150,
+        "consecutive_frames_threshold": 5,
+        "cooldown_seconds": 30
+    },
+    "camera": {
+        "device_id": 0,
+        "width": 640,
+        "height": 480,
+        "fps": 30
+    },
+    "notification": {
+        "include_screenshot": true,
+        "severity_levels": {
+            "mild": {"min_angle": 35, "max_angle": 50},
+            "severe": {"min_angle": 50, "max_angle": 90}
+        }
+    }
+}

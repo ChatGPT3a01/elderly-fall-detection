@@ -1,0 +1,19 @@
+{
+  "name": "elderly-fall-detection-line-bot",
+  "version": "1.0.0",
+  "description": "LINE Bot notification module for elderly fall detection system",
+  "main": "bot.js",
+  "scripts": {
+    "start": "node bot.js",
+    "test": "node bot.js"
+  },
+  "keywords": [
+    "line-bot",
+    "fall-detection",
+    "elderly-care",
+    "notification"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {}
+}

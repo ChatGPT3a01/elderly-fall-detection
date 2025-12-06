@@ -1,0 +1,494 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Part 2 - 系統架構與技術解析 | 樂齡防傾倒系統</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Microsoft JhengHei', 'Segoe UI', Arial, sans-serif;
+            background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
+            min-height: 100vh;
+            overflow: hidden;
+            color: #333;
+        }
+
+        .nav-bar {
+            position: fixed;
+            top: 0; left: 0; right: 0;
+            height: 60px;
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(12px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 30px;
+            z-index: 10000;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        .nav-title {
+            font-size: 22px;
+            font-weight: 700;
+            color: #fff;
+            letter-spacing: 1px;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+
+        .nav-buttons { display: flex; gap: 12px; }
+
+        .nav-btn {
+            background: rgba(255, 255, 255, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.4);
+            color: white;
+            padding: 6px 16px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .nav-btn:hover {
+            background: rgba(255, 255, 255, 0.4);
+            transform: translateY(-2px);
+        }
+
+        .nav-arrow {
+            position: fixed;
+            top: 50%;
+            transform: translateY(-50%);
+            background: rgba(255,255,255,0.25);
+            color: white;
+            width: 60px; height: 60px;
+            border-radius: 50%;
+            border: 2px solid rgba(255,255,255,0.4);
+            font-size: 24px;
+            cursor: pointer;
+            z-index: 9000;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .nav-arrow:hover {
+            background: rgba(255,255,255,0.5);
+            transform: translateY(-50%) scale(1.1);
+        }
+        .prev-arrow { left: 30px; }
+        .next-arrow { right: 30px; }
+        .nav-arrow:disabled { opacity: 0.3; cursor: not-allowed; }
+
+        .slide-container {
+            width: 100%;
+            height: 100vh;
+            padding-top: 60px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .slide {
+            position: absolute;
+            top: 60px; left: 0;
+            width: 100%;
+            height: calc(100vh - 60px);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 40px;
+            opacity: 0;
+            transition: opacity 0.4s ease;
+            z-index: 10;
+        }
+
+        .slide.active {
+            display: flex;
+            opacity: 1;
+            z-index: 20;
+        }
+
+        .content-card {
+            background: rgba(255, 255, 255, 0.98);
+            border-radius: 24px;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.3);
+            padding: 60px;
+            max-width: 1400px;
+            width: 95%;
+            max-height: 88vh;
+            overflow-y: auto;
+            position: relative;
+        }
+
+        h1 { color: #2980b9; font-size: 56px; margin-bottom: 24px; text-align: center; }
+        h2 { color: #3498db; font-size: 38px; margin-bottom: 35px; border-bottom: 3px solid #3498db; padding-bottom: 12px; }
+        h3 { color: #2980b9; font-size: 26px; margin: 30px 0 15px 0; }
+        h4 { color: #3498db; font-size: 22px; margin: 20px 0 12px 0; }
+        p, li { font-size: 20px; line-height: 1.8; color: #444; margin-bottom: 15px; }
+        code { background: #e8f4fc; padding: 3px 8px; border-radius: 6px; font-family: monospace; color: #2980b9; font-weight: 600; font-size: 0.95em; }
+        pre { background: #282c34; color: #abb2bf; padding: 25px; border-radius: 12px; overflow-x: auto; margin: 25px 0; font-size: 16px; line-height: 1.6; font-family: monospace; }
+
+        .box { padding: 25px; border-radius: 12px; margin: 25px 0; border-left: 6px solid; font-size: 20px; }
+        .info { background: #e8f4fc; border-color: #3498db; color: #1a5276; }
+        .warning { background: #fff3cd; border-color: #ffc107; color: #856404; }
+        .success { background: #d4edda; border-color: #28a745; color: #155724; }
+
+        .concept-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 25px; margin-top: 30px; }
+        .concept-card { background: #f8f9fa; padding: 25px; border-radius: 15px; border: 1px solid #e9ecef; transition: transform 0.3s; }
+        .concept-card:hover { transform: translateY(-8px); border-color: #3498db; }
+
+        .feature-icon { font-size: 48px; margin-bottom: 15px; }
+
+        .file-tree {
+            background: #1e1e1e;
+            color: #d4d4d4;
+            padding: 25px;
+            border-radius: 12px;
+            font-family: monospace;
+            font-size: 16px;
+            line-height: 1.8;
+        }
+        .file-tree .folder { color: #dcdcaa; }
+        .file-tree .file { color: #9cdcfe; }
+        .file-tree .comment { color: #6a9955; }
+
+        .author-box {
+            background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
+            color: white;
+            padding: 30px;
+            border-radius: 15px;
+            text-align: center;
+            margin-top: 30px;
+        }
+        .author-box p { color: rgba(255,255,255,0.9); margin: 10px 0; }
+
+        .indicators { position: fixed; bottom: 25px; left: 50%; transform: translateX(-50%); display: flex; gap: 12px; z-index: 4000; padding: 10px 25px; background: rgba(0,0,0,0.3); border-radius: 30px; backdrop-filter: blur(5px); }
+        .dot { width: 12px; height: 12px; background: rgba(255,255,255,0.4); border-radius: 50%; cursor: pointer; transition: all 0.3s; }
+        .dot.active { background: #fff; transform: scale(1.3); }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 15px;
+            text-align: left;
+        }
+        th {
+            background: #3498db;
+            color: white;
+        }
+        tr:nth-child(even) {
+            background: #f8f9fa;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="nav-bar">
+        <div class="nav-title">Part 2 - 系統架構與技術解析</div>
+        <div class="nav-buttons">
+            <a href="index.html" class="nav-btn">🏠 首頁</a>
+            <button class="nav-btn" onclick="toggleFullscreen()">🖥️ 全螢幕</button>
+            <a href="https://www.youtube.com/@Liang-yt02" target="_blank" class="nav-btn">🎥 YT</a>
+            <a href="https://www.facebook.com/?locale=zh_TW" target="_blank" class="nav-btn">📘 FB</a>
+        </div>
+    </div>
+
+    <div class="slide-container">
+
+        <!-- Slide 1: 封面 -->
+        <div class="slide active">
+            <div class="content-card" style="text-align: center; display: flex; flex-direction: column; justify-content: center; align-items: center;">
+                <h4 style="color: #3498db; letter-spacing: 2px; margin-bottom: 10px;">AI 影像辨識與自動化應用</h4>
+                <h1>系統架構與技術解析</h1>
+                <h2 style="border: none; font-weight: normal; font-size: 28px; color: #666; max-width: 800px;">
+                    Part 2：深入了解專案結構與核心演算法
+                </h2>
+                <div class="author-box" style="margin-top: 50px; width: 100%; max-width: 500px;">
+                    <p><strong>製作人：</strong>曾楚庭</p>
+                    <p><strong>指導老師：</strong>曾慶良</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 2: 專案結構 -->
+        <div class="slide">
+            <div class="content-card">
+                <h2>📁 專案目錄結構</h2>
+                <div class="file-tree">
+<span class="folder">elderly_fall_detection/</span>
+├── <span class="file">app.py</span>                     <span class="comment"># 主程式入口</span>
+├── <span class="file">config.json</span>                <span class="comment"># 設定檔</span>
+├── <span class="file">.env</span>                       <span class="comment"># 環境變數（API金鑰）</span>
+├── <span class="file">requirements.txt</span>           <span class="comment"># Python 套件需求</span>
+├── <span class="folder">pose_detection/</span>            <span class="comment"># 姿勢偵測模組</span>
+│   ├── <span class="file">__init__.py</span>
+│   ├── <span class="file">detector.py</span>            <span class="comment"># 骨架偵測器（MediaPipe）</span>
+│   ├── <span class="file">fall_detector.py</span>       <span class="comment"># 跌倒偵測邏輯</span>
+│   └── <span class="folder">utils/</span>
+│       └── <span class="file">angle_calc.py</span>      <span class="comment"># 角度計算公式</span>
+├── <span class="folder">line_bot/</span>                  <span class="comment"># LINE Bot 模組</span>
+│   ├── <span class="file">__init__.py</span>
+│   └── <span class="file">bot.py</span>                 <span class="comment"># LINE 通知功能</span>
+└── <span class="folder">screenshots/</span>               <span class="comment"># 警報截圖目錄</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 3: 模組說明 -->
+        <div class="slide">
+            <div class="content-card">
+                <h2>📦 核心模組說明</h2>
+                <div class="concept-grid">
+                    <div class="concept-card">
+                        <div class="feature-icon">🎯</div>
+                        <h3>app.py</h3>
+                        <p>主程式入口，整合所有模組，控制整體流程與使用者介面</p>
+                    </div>
+                    <div class="concept-card">
+                        <div class="feature-icon">🦴</div>
+                        <h3>detector.py</h3>
+                        <p>封裝 MediaPipe Pose，提供骨架偵測與關鍵點座標取得功能</p>
+                    </div>
+                    <div class="concept-card">
+                        <div class="feature-icon">⚠️</div>
+                        <h3>fall_detector.py</h3>
+                        <p>跌倒判斷邏輯，包含角度計算、異常偵測與嚴重程度評估</p>
+                    </div>
+                    <div class="concept-card">
+                        <div class="feature-icon">📱</div>
+                        <h3>bot.py</h3>
+                        <p>LINE Bot 通知模組，支援文字訊息與 Flex Message 卡片</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 4: 傾斜角度計算 -->
+        <div class="slide">
+            <div class="content-card">
+                <h2>📐 傾斜角度計算公式</h2>
+                <p>使用向量法計算軀幹（肩膀中點到髖部中點）與垂直線的夾角：</p>
+                <pre><code class="language-python"># 向量法計算傾斜角度
+def calculate_torso_angle(shoulder_mid, hip_mid):
+    # point1: 肩膀中點
+    # point2: 髖部中點
+    dx = hip_mid[0] - shoulder_mid[0]  # 水平位移
+    dy = hip_mid[1] - shoulder_mid[1]  # 垂直位移
+
+    # 計算與垂直線的夾角
+    angle_rad = math.atan2(abs(dx), abs(dy))
+    angle_deg = math.degrees(angle_rad)
+
+    return angle_deg</code></pre>
+                <div class="box info">
+                    <strong>角度意義：</strong><br>
+                    • <code>0°</code> = 完全垂直（正常站立）<br>
+                    • <code>35°</code> = 輕微傾斜（發出警告）<br>
+                    • <code>50°+</code> = 嚴重傾斜（緊急警報）
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 5: 異常偵測條件 -->
+        <div class="slide">
+            <div class="content-card">
+                <h2>🚨 異常偵測條件</h2>
+                <p>以下任一條件成立即視為可能跌倒：</p>
+                <table>
+                    <tr>
+                        <th>條件</th>
+                        <th>說明</th>
+                        <th>預設閾值</th>
+                    </tr>
+                    <tr>
+                        <td><strong>軀幹傾斜角度</strong></td>
+                        <td>肩膀中點到髖部中點的向量與垂直線夾角</td>
+                        <td>> 35°</td>
+                    </tr>
+                    <tr>
+                        <td><strong>頭部高度下降</strong></td>
+                        <td>頭部 Y 座標突然大幅下降</td>
+                        <td>> 100 像素</td>
+                    </tr>
+                    <tr>
+                        <td><strong>身體中心位移</strong></td>
+                        <td>身體重心大幅偏移（使用三角形重心法）</td>
+                        <td>> 150 像素</td>
+                    </tr>
+                </table>
+                <div class="box warning">
+                    <strong>多指標驗證：</strong>至少 2 個條件同時成立才觸發警報，提高準確度。
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 6: 偵測關鍵點 -->
+        <div class="slide">
+            <div class="content-card">
+                <h2>🦴 MediaPipe 偵測關鍵點</h2>
+                <p>MediaPipe Pose 可偵測人體 33 個關鍵點，本系統主要使用：</p>
+                <div class="concept-grid">
+                    <div class="concept-card">
+                        <h4>👤 頭部</h4>
+                        <ul>
+                            <li>鼻子 (Nose)</li>
+                            <li>左/右眼 (Eyes)</li>
+                            <li>左/右耳 (Ears)</li>
+                        </ul>
+                    </div>
+                    <div class="concept-card">
+                        <h4>💪 上半身</h4>
+                        <ul>
+                            <li>左/右肩膀 (Shoulders)</li>
+                            <li>左/右手肘 (Elbows)</li>
+                            <li>左/右手腕 (Wrists)</li>
+                        </ul>
+                    </div>
+                    <div class="concept-card">
+                        <h4>🦵 下半身</h4>
+                        <ul>
+                            <li>左/右髖部 (Hips)</li>
+                            <li>左/右膝蓋 (Knees)</li>
+                            <li>左/右腳踝 (Ankles)</li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="box info">
+                    <strong>軀幹計算：</strong>使用肩膀中點 ↔ 髖部中點形成的線段
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 7: 設定參數 -->
+        <div class="slide">
+            <div class="content-card">
+                <h2>⚙️ 可調整參數 (config.json)</h2>
+                <pre><code class="language-json">{
+    "detection": {
+        "torso_angle_threshold": 35,      // 軀幹傾斜閾值（度）
+        "head_drop_threshold": 100,       // 頭部下降閾值（像素）
+        "center_shift_threshold": 150,    // 中心位移閾值（像素）
+        "consecutive_frames_threshold": 5, // 連續幀數確認
+        "cooldown_seconds": 30            // 警報冷卻時間（秒）
+    },
+    "camera": {
+        "device_id": 0,                   // 攝影機 ID
+        "width": 640,                     // 畫面寬度
+        "height": 480,                    // 畫面高度
+        "fps": 30                         // 目標幀率
+    }
+}</code></pre>
+            </div>
+        </div>
+
+        <!-- Slide 8: 總結 -->
+        <div class="slide">
+            <div class="content-card" style="text-align: center;">
+                <h2>📝 Part 2 總結</h2>
+                <p style="font-size: 24px; margin-bottom: 30px;">了解系統架構有助於客製化調整與問題排解</p>
+                <div class="concept-grid" style="max-width: 800px; margin: 0 auto;">
+                    <div class="concept-card">
+                        <h3>✅ 已了解</h3>
+                        <ul style="text-align: left;">
+                            <li>專案目錄結構</li>
+                            <li>各模組功能說明</li>
+                            <li>傾斜角度計算公式</li>
+                            <li>異常偵測條件與閾值</li>
+                        </ul>
+                    </div>
+                    <div class="concept-card">
+                        <h3>➡️ 下一步</h3>
+                        <ul style="text-align: left;">
+                            <li>Part 3：環境準備與安裝</li>
+                            <li>安裝 Python 與套件</li>
+                            <li>設定開發環境</li>
+                        </ul>
+                    </div>
+                </div>
+                <div style="margin-top: 40px;">
+                    <a href="Part3_環境安裝.html" class="nav-btn" style="background: #3498db; padding: 15px 40px; font-size: 18px; border-radius: 30px;">
+                        前往 Part 3 →
+                    </a>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <button class="nav-arrow prev-arrow" id="prevBtn" onclick="changeSlide(-1)">❮</button>
+    <button class="nav-arrow next-arrow" id="nextBtn" onclick="changeSlide(1)">❯</button>
+
+    <div class="indicators" id="indicatorContainer"></div>
+
+    <script>
+        let currentSlide = 0;
+        const slides = document.querySelectorAll('.slide');
+        const totalSlides = slides.length;
+
+        function init() {
+            createIndicators();
+            showSlide(0);
+            updateButtons();
+            document.addEventListener('keydown', handleKeydown);
+        }
+
+        function handleKeydown(e) {
+            if (e.key === 'ArrowLeft') changeSlide(-1);
+            if (e.key === 'ArrowRight') changeSlide(1);
+        }
+
+        function createIndicators() {
+            const container = document.getElementById('indicatorContainer');
+            container.innerHTML = '';
+            slides.forEach((_, index) => {
+                const dot = document.createElement('div');
+                dot.className = 'dot';
+                dot.onclick = () => goToSlide(index);
+                container.appendChild(dot);
+            });
+        }
+
+        function showSlide(index) {
+            if (index < 0) index = 0;
+            if (index >= totalSlides) index = totalSlides - 1;
+            slides.forEach(slide => slide.classList.remove('active'));
+            slides[index].classList.add('active');
+            currentSlide = index;
+            const dots = document.querySelectorAll('.dot');
+            dots.forEach((dot, idx) => dot.classList.toggle('active', idx === index));
+            updateButtons();
+        }
+
+        function changeSlide(direction) { showSlide(currentSlide + direction); }
+        function goToSlide(index) { showSlide(index); }
+        function updateButtons() {
+            document.getElementById('prevBtn').disabled = currentSlide === 0;
+            document.getElementById('nextBtn').disabled = currentSlide === totalSlides - 1;
+        }
+
+        function toggleFullscreen() {
+            if (!document.fullscreenElement) {
+                document.documentElement.requestFullscreen();
+            } else {
+                if (document.exitFullscreen) document.exitFullscreen();
+            }
+        }
+
+        init();
+    </script>
+</body>
+</html>

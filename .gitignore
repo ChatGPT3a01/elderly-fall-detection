@@ -1,0 +1,56 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Virtual Environment
+venv/
+ENV/
+env/
+.venv/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# Environment Variables (Contains API Keys)
+.env
+.env.local
+.env.*.local
+
+# Screenshots (Can be large)
+screenshots/*.jpg
+screenshots/*.png
+
+# Config with sensitive data
+# config.json  # Uncomment if your config contains sensitive data
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Zip files
+*.zip

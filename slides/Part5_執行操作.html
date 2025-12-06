@@ -1,0 +1,538 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Part 5 - 執行與操作指南 | 樂齡防傾倒系統</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Microsoft JhengHei', 'Segoe UI', Arial, sans-serif;
+            background: linear-gradient(135deg, #9b59b6 0%, #8e44ad 100%);
+            min-height: 100vh;
+            overflow: hidden;
+            color: #333;
+        }
+
+        .nav-bar {
+            position: fixed;
+            top: 0; left: 0; right: 0;
+            height: 60px;
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(12px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 30px;
+            z-index: 10000;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        .nav-title {
+            font-size: 22px;
+            font-weight: 700;
+            color: #fff;
+            letter-spacing: 1px;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+
+        .nav-buttons { display: flex; gap: 12px; }
+
+        .nav-btn {
+            background: rgba(255, 255, 255, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.4);
+            color: white;
+            padding: 6px 16px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .nav-btn:hover {
+            background: rgba(255, 255, 255, 0.4);
+            transform: translateY(-2px);
+        }
+
+        .nav-arrow {
+            position: fixed;
+            top: 50%;
+            transform: translateY(-50%);
+            background: rgba(255,255,255,0.25);
+            color: white;
+            width: 60px; height: 60px;
+            border-radius: 50%;
+            border: 2px solid rgba(255,255,255,0.4);
+            font-size: 24px;
+            cursor: pointer;
+            z-index: 9000;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .nav-arrow:hover {
+            background: rgba(255,255,255,0.5);
+            transform: translateY(-50%) scale(1.1);
+        }
+        .prev-arrow { left: 30px; }
+        .next-arrow { right: 30px; }
+        .nav-arrow:disabled { opacity: 0.3; cursor: not-allowed; }
+
+        .slide-container {
+            width: 100%;
+            height: 100vh;
+            padding-top: 60px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .slide {
+            position: absolute;
+            top: 60px; left: 0;
+            width: 100%;
+            height: calc(100vh - 60px);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 40px;
+            opacity: 0;
+            transition: opacity 0.4s ease;
+            z-index: 10;
+        }
+
+        .slide.active {
+            display: flex;
+            opacity: 1;
+            z-index: 20;
+        }
+
+        .content-card {
+            background: rgba(255, 255, 255, 0.98);
+            border-radius: 24px;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.3);
+            padding: 60px;
+            max-width: 1400px;
+            width: 95%;
+            max-height: 88vh;
+            overflow-y: auto;
+            position: relative;
+        }
+
+        h1 { color: #8e44ad; font-size: 56px; margin-bottom: 24px; text-align: center; }
+        h2 { color: #9b59b6; font-size: 38px; margin-bottom: 35px; border-bottom: 3px solid #9b59b6; padding-bottom: 12px; }
+        h3 { color: #8e44ad; font-size: 26px; margin: 30px 0 15px 0; }
+        h4 { color: #9b59b6; font-size: 22px; margin: 20px 0 12px 0; }
+        p, li { font-size: 20px; line-height: 1.8; color: #444; margin-bottom: 15px; }
+        code { background: #f5eef8; padding: 3px 8px; border-radius: 6px; font-family: monospace; color: #8e44ad; font-weight: 600; font-size: 0.95em; }
+        pre { background: #282c34; color: #abb2bf; padding: 25px; border-radius: 12px; overflow-x: auto; margin: 25px 0; font-size: 16px; line-height: 1.6; font-family: monospace; }
+
+        .box { padding: 25px; border-radius: 12px; margin: 25px 0; border-left: 6px solid; font-size: 20px; }
+        .info { background: #f5eef8; border-color: #9b59b6; color: #6c3483; }
+        .warning { background: #fff3cd; border-color: #ffc107; color: #856404; }
+        .success { background: #d4edda; border-color: #28a745; color: #155724; }
+        .danger { background: #f8d7da; border-color: #dc3545; color: #721c24; }
+
+        .concept-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 25px; margin-top: 30px; }
+        .concept-card { background: #f8f9fa; padding: 25px; border-radius: 15px; border: 1px solid #e9ecef; transition: transform 0.3s; }
+        .concept-card:hover { transform: translateY(-8px); border-color: #9b59b6; }
+
+        .feature-icon { font-size: 48px; margin-bottom: 15px; }
+
+        .author-box {
+            background: linear-gradient(135deg, #9b59b6 0%, #8e44ad 100%);
+            color: white;
+            padding: 30px;
+            border-radius: 15px;
+            text-align: center;
+            margin-top: 30px;
+        }
+        .author-box p { color: rgba(255,255,255,0.9); margin: 10px 0; }
+
+        .indicators { position: fixed; bottom: 25px; left: 50%; transform: translateX(-50%); display: flex; gap: 12px; z-index: 4000; padding: 10px 25px; background: rgba(0,0,0,0.3); border-radius: 30px; backdrop-filter: blur(5px); }
+        .dot { width: 12px; height: 12px; background: rgba(255,255,255,0.4); border-radius: 50%; cursor: pointer; transition: all 0.3s; }
+        .dot.active { background: #fff; transform: scale(1.3); }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 15px;
+            text-align: left;
+        }
+        th {
+            background: #9b59b6;
+            color: white;
+        }
+        tr:nth-child(even) {
+            background: #f8f9fa;
+        }
+
+        .key-box {
+            display: inline-block;
+            background: #333;
+            color: white;
+            padding: 8px 16px;
+            border-radius: 8px;
+            font-family: monospace;
+            font-size: 18px;
+            margin: 5px;
+            box-shadow: 0 3px 6px rgba(0,0,0,0.3);
+        }
+
+        .checklist {
+            list-style: none;
+            padding: 0;
+        }
+        .checklist li {
+            padding: 15px;
+            border-bottom: 1px solid #eee;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        .checklist li::before {
+            content: '☐';
+            font-size: 24px;
+            color: #9b59b6;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="nav-bar">
+        <div class="nav-title">Part 5 - 執行與操作指南</div>
+        <div class="nav-buttons">
+            <a href="index.html" class="nav-btn">🏠 首頁</a>
+            <button class="nav-btn" onclick="toggleFullscreen()">🖥️ 全螢幕</button>
+            <a href="https://www.youtube.com/@Liang-yt02" target="_blank" class="nav-btn">🎥 YT</a>
+            <a href="https://www.facebook.com/?locale=zh_TW" target="_blank" class="nav-btn">📘 FB</a>
+        </div>
+    </div>
+
+    <div class="slide-container">
+
+        <!-- Slide 1: 封面 -->
+        <div class="slide active">
+            <div class="content-card" style="text-align: center; display: flex; flex-direction: column; justify-content: center; align-items: center;">
+                <h4 style="color: #9b59b6; letter-spacing: 2px; margin-bottom: 10px;">AI 影像辨識與自動化應用</h4>
+                <h1>執行與操作指南</h1>
+                <h2 style="border: none; font-weight: normal; font-size: 28px; color: #666; max-width: 800px;">
+                    Part 5：啟動系統並進行測試
+                </h2>
+                <div class="author-box" style="margin-top: 50px; width: 100%; max-width: 500px;">
+                    <p><strong>製作人：</strong>曾楚庭</p>
+                    <p><strong>指導老師：</strong>曾慶良</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 2: 啟動系統 -->
+        <div class="slide">
+            <div class="content-card">
+                <h2>🚀 啟動跌倒偵測系統</h2>
+                <h4>基本執行：</h4>
+                <pre><code>python app.py</code></pre>
+                <h4>指定攝影機（選用）：</h4>
+                <pre><code>python app.py --camera 1</code></pre>
+                <h4>指定設定檔（選用）：</h4>
+                <pre><code>python app.py --config /path/to/config.json</code></pre>
+                <div class="box success">
+                    <strong>啟動成功：</strong>會顯示攝影機畫面與即時骨架偵測結果。
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 3: 快捷鍵 -->
+        <div class="slide">
+            <div class="content-card">
+                <h2>⌨️ 操作快捷鍵</h2>
+                <table>
+                    <tr>
+                        <th>按鍵</th>
+                        <th>功能說明</th>
+                    </tr>
+                    <tr>
+                        <td><span class="key-box">q</span> 或 <span class="key-box">ESC</span></td>
+                        <td>退出程式</td>
+                    </tr>
+                    <tr>
+                        <td><span class="key-box">c</span></td>
+                        <td>校準（站立時按下，建立基準線）</td>
+                    </tr>
+                    <tr>
+                        <td><span class="key-box">r</span></td>
+                        <td>重置警報冷卻時間</td>
+                    </tr>
+                    <tr>
+                        <td><span class="key-box">s</span></td>
+                        <td>手動截圖儲存</td>
+                    </tr>
+                </table>
+                <div class="box info">
+                    <strong>建議：</strong>啟動後先按 <code>c</code> 鍵進行校準，讓系統更精準。
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 4: 畫面說明 -->
+        <div class="slide">
+            <div class="content-card">
+                <h2>🖥️ 畫面資訊說明</h2>
+                <div class="concept-grid">
+                    <div class="concept-card">
+                        <div class="feature-icon">📊</div>
+                        <h3>資訊面板（左上角）</h3>
+                        <ul>
+                            <li><strong>FPS：</strong>畫面更新速率</li>
+                            <li><strong>Torso Angle：</strong>軀幹傾斜角度</li>
+                            <li><strong>Head Height：</strong>頭部高度</li>
+                            <li><strong>Center Shift：</strong>中心位移</li>
+                            <li><strong>Consecutive：</strong>連續偵測狀態</li>
+                        </ul>
+                    </div>
+                    <div class="concept-card">
+                        <div class="feature-icon">🦴</div>
+                        <h3>骨架顯示</h3>
+                        <ul>
+                            <li>綠色線條：正常狀態</li>
+                            <li>橘色/紅色：傾斜警告</li>
+                            <li>紅色邊框：觸發警報</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 5: 測試流程 -->
+        <div class="slide">
+            <div class="content-card">
+                <h2>🧪 測試跌倒偵測</h2>
+                <h4>測試步驟：</h4>
+                <ol style="padding-left: 25px;">
+                    <li>執行 <code>python app.py</code></li>
+                    <li>站在攝影機前，確認骨架顯示正常</li>
+                    <li>按 <code>c</code> 鍵進行校準</li>
+                    <li>緩慢傾斜身體或蹲下</li>
+                    <li>觀察資訊面板的角度變化</li>
+                    <li>當角度超過閾值時，應該會收到 LINE 通知</li>
+                </ol>
+                <div class="box warning">
+                    <strong>安全提醒：</strong>測試時請注意安全，不要真的跌倒！
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 6: 測試清單 -->
+        <div class="slide">
+            <div class="content-card">
+                <h2>✅ 測試驗證清單</h2>
+                <ul class="checklist">
+                    <li>執行 app.py 顯示攝影機畫面和骨架</li>
+                    <li>站立時按 c 鍵顯示「校準完成」</li>
+                    <li>傾斜身體時資訊面板顯示角度變化</li>
+                    <li>模擬跌倒時畫面邊框變紅</li>
+                    <li>手機收到 LINE 通知</li>
+                    <li>screenshots 資料夾有儲存跌倒圖片</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Slide 7: 參數調整 -->
+        <div class="slide">
+            <div class="content-card">
+                <h2>⚙️ 常見問題與參數調整</h2>
+                <div class="concept-grid">
+                    <div class="concept-card">
+                        <h4>🔴 誤報太多？</h4>
+                        <p>調高閾值：</p>
+                        <pre><code>"torso_angle_threshold": 40,
+"consecutive_frames_threshold": 10,
+"cooldown_seconds": 60</code></pre>
+                    </div>
+                    <div class="concept-card">
+                        <h4>🔵 漏報太多？</h4>
+                        <p>調低閾值：</p>
+                        <pre><code>"torso_angle_threshold": 30,
+"consecutive_frames_threshold": 3</code></pre>
+                    </div>
+                </div>
+                <div class="box info">
+                    <strong>提示：</strong>根據實際使用環境微調參數，找到最佳平衡點。
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 8: 常見問題 -->
+        <div class="slide">
+            <div class="content-card">
+                <h2>❓ 常見問題排解</h2>
+                <div class="concept-grid">
+                    <div class="concept-card">
+                        <h4>攝影機無法開啟</h4>
+                        <ul>
+                            <li>確認攝影機已連接</li>
+                            <li>關閉其他使用攝影機的程式</li>
+                            <li>嘗試 <code>--camera 1</code></li>
+                        </ul>
+                    </div>
+                    <div class="concept-card">
+                        <h4>LINE 通知沒收到</h4>
+                        <ul>
+                            <li>確認金鑰設定正確</li>
+                            <li>確認已加 Bot 好友</li>
+                            <li>檢查網路連線</li>
+                        </ul>
+                    </div>
+                    <div class="concept-card">
+                        <h4>骨架偵測不準</h4>
+                        <ul>
+                            <li>確保光線充足</li>
+                            <li>站在畫面中央</li>
+                            <li>與攝影機保持適當距離</li>
+                        </ul>
+                    </div>
+                    <div class="concept-card">
+                        <h4>模組找不到錯誤</h4>
+                        <ul>
+                            <li>確認虛擬環境已啟動</li>
+                            <li>重新安裝套件</li>
+                            <li><code>pip install -r requirements.txt</code></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 9: 課程總結 -->
+        <div class="slide">
+            <div class="content-card" style="text-align: center;">
+                <h2>🎉 課程總結</h2>
+                <p style="font-size: 24px; margin-bottom: 30px;">恭喜完成樂齡防傾倒系統的學習！</p>
+                <div class="concept-grid" style="max-width: 1000px; margin: 0 auto;">
+                    <div class="concept-card">
+                        <div class="feature-icon">📚</div>
+                        <h3>Part 1</h3>
+                        <p>專案介紹與系統概述</p>
+                    </div>
+                    <div class="concept-card">
+                        <div class="feature-icon">🏗️</div>
+                        <h3>Part 2</h3>
+                        <p>系統架構與技術解析</p>
+                    </div>
+                    <div class="concept-card">
+                        <div class="feature-icon">🔧</div>
+                        <h3>Part 3</h3>
+                        <p>環境準備與安裝設定</p>
+                    </div>
+                    <div class="concept-card">
+                        <div class="feature-icon">💬</div>
+                        <h3>Part 4</h3>
+                        <p>LINE Bot 設定教學</p>
+                    </div>
+                    <div class="concept-card">
+                        <div class="feature-icon">🚀</div>
+                        <h3>Part 5</h3>
+                        <p>執行與操作指南</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 10: 感謝 -->
+        <div class="slide">
+            <div class="content-card" style="text-align: center; display: flex; flex-direction: column; justify-content: center; align-items: center;">
+                <h1 style="font-size: 72px; margin-bottom: 40px;">🙏 感謝學習</h1>
+                <h2 style="border: none; font-size: 32px; color: #666;">期待您將 AI 技術應用於更多照護場景！</h2>
+                <div class="author-box" style="margin-top: 50px; width: 100%; max-width: 600px;">
+                    <h3 style="color: white; margin-bottom: 20px;">製作團隊</h3>
+                    <p style="font-size: 22px;"><strong>製作人：</strong>曾楚庭</p>
+                    <p style="font-size: 22px;"><strong>指導老師：</strong>曾慶良</p>
+                </div>
+                <div style="margin-top: 40px;">
+                    <a href="index.html" class="nav-btn" style="background: #9b59b6; padding: 15px 40px; font-size: 18px; border-radius: 30px;">
+                        🏠 返回首頁
+                    </a>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <button class="nav-arrow prev-arrow" id="prevBtn" onclick="changeSlide(-1)">❮</button>
+    <button class="nav-arrow next-arrow" id="nextBtn" onclick="changeSlide(1)">❯</button>
+
+    <div class="indicators" id="indicatorContainer"></div>
+
+    <script>
+        let currentSlide = 0;
+        const slides = document.querySelectorAll('.slide');
+        const totalSlides = slides.length;
+
+        function init() {
+            createIndicators();
+            showSlide(0);
+            updateButtons();
+            document.addEventListener('keydown', handleKeydown);
+        }
+
+        function handleKeydown(e) {
+            if (e.key === 'ArrowLeft') changeSlide(-1);
+            if (e.key === 'ArrowRight') changeSlide(1);
+        }
+
+        function createIndicators() {
+            const container = document.getElementById('indicatorContainer');
+            container.innerHTML = '';
+            slides.forEach((_, index) => {
+                const dot = document.createElement('div');
+                dot.className = 'dot';
+                dot.onclick = () => goToSlide(index);
+                container.appendChild(dot);
+            });
+        }
+
+        function showSlide(index) {
+            if (index < 0) index = 0;
+            if (index >= totalSlides) index = totalSlides - 1;
+            slides.forEach(slide => slide.classList.remove('active'));
+            slides[index].classList.add('active');
+            currentSlide = index;
+            const dots = document.querySelectorAll('.dot');
+            dots.forEach((dot, idx) => dot.classList.toggle('active', idx === index));
+            updateButtons();
+        }
+
+        function changeSlide(direction) { showSlide(currentSlide + direction); }
+        function goToSlide(index) { showSlide(index); }
+        function updateButtons() {
+            document.getElementById('prevBtn').disabled = currentSlide === 0;
+            document.getElementById('nextBtn').disabled = currentSlide === totalSlides - 1;
+        }
+
+        function toggleFullscreen() {
+            if (!document.fullscreenElement) {
+                document.documentElement.requestFullscreen();
+            } else {
+                if (document.exitFullscreen) document.exitFullscreen();
+            }
+        }
+
+        init();
+    </script>
+</body>
+</html>

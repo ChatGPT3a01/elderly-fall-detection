@@ -1,0 +1,508 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Part 1 - 專案介紹與系統概述 | 樂齡防傾倒系統</title>
+    <style>
+        /* 基礎設定 */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Microsoft JhengHei', 'Segoe UI', Arial, sans-serif;
+            background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
+            min-height: 100vh;
+            overflow: hidden;
+            color: #333;
+        }
+
+        /* === 導航列 === */
+        .nav-bar {
+            position: fixed;
+            top: 0; left: 0; right: 0;
+            height: 60px;
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(12px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 30px;
+            z-index: 10000;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        .nav-title {
+            font-size: 22px;
+            font-weight: 700;
+            color: #fff;
+            letter-spacing: 1px;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+
+        .nav-buttons { display: flex; gap: 12px; }
+
+        .nav-btn {
+            background: rgba(255, 255, 255, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.4);
+            color: white;
+            padding: 6px 16px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .nav-btn:hover {
+            background: rgba(255, 255, 255, 0.4);
+            transform: translateY(-2px);
+        }
+
+        /* === 導航箭頭 === */
+        .nav-arrow {
+            position: fixed;
+            top: 50%;
+            transform: translateY(-50%);
+            background: rgba(255,255,255,0.25);
+            color: white;
+            width: 60px; height: 60px;
+            border-radius: 50%;
+            border: 2px solid rgba(255,255,255,0.4);
+            font-size: 24px;
+            cursor: pointer;
+            z-index: 9000;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .nav-arrow:hover {
+            background: rgba(255,255,255,0.5);
+            transform: translateY(-50%) scale(1.1);
+        }
+        .prev-arrow { left: 30px; }
+        .next-arrow { right: 30px; }
+        .nav-arrow:disabled { opacity: 0.3; cursor: not-allowed; }
+
+        /* === 投影片容器 === */
+        .slide-container {
+            width: 100%;
+            height: 100vh;
+            padding-top: 60px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .slide {
+            position: absolute;
+            top: 60px; left: 0;
+            width: 100%;
+            height: calc(100vh - 60px);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 40px;
+            opacity: 0;
+            transition: opacity 0.4s ease;
+            z-index: 10;
+        }
+
+        .slide.active {
+            display: flex;
+            opacity: 1;
+            z-index: 20;
+        }
+
+        /* === 內容卡片 === */
+        .content-card {
+            background: rgba(255, 255, 255, 0.98);
+            border-radius: 24px;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.3);
+            padding: 60px;
+            max-width: 1400px;
+            width: 95%;
+            max-height: 88vh;
+            overflow-y: auto;
+            position: relative;
+        }
+
+        /* 通用樣式 */
+        h1 { color: #c0392b; font-size: 56px; margin-bottom: 24px; text-align: center; }
+        h2 { color: #e74c3c; font-size: 38px; margin-bottom: 35px; border-bottom: 3px solid #e74c3c; padding-bottom: 12px; }
+        h3 { color: #c0392b; font-size: 26px; margin: 30px 0 15px 0; }
+        h4 { color: #e74c3c; font-size: 22px; margin: 20px 0 12px 0; }
+        p, li { font-size: 20px; line-height: 1.8; color: #444; margin-bottom: 15px; }
+        code { background: #fdf2f2; padding: 3px 8px; border-radius: 6px; font-family: monospace; color: #c0392b; font-weight: 600; font-size: 0.95em; }
+        pre { background: #282c34; color: #abb2bf; padding: 25px; border-radius: 12px; overflow-x: auto; margin: 25px 0; font-size: 18px; line-height: 1.6; font-family: monospace; }
+
+        .box { padding: 25px; border-radius: 12px; margin: 25px 0; border-left: 6px solid; font-size: 20px; }
+        .info { background: #fef5f5; border-color: #e74c3c; color: #a93226; }
+        .warning { background: #fff3cd; border-color: #ffc107; color: #856404; }
+        .success { background: #d4edda; border-color: #28a745; color: #155724; }
+        .highlight { background: linear-gradient(120deg, #ffcccc 0%, #ffe6e6 100%); padding: 2px 6px; border-radius: 4px; font-weight: bold; color: #a93226; }
+
+        .concept-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 25px; margin-top: 30px; }
+        .concept-card { background: #f8f9fa; padding: 25px; border-radius: 15px; border: 1px solid #e9ecef; transition: transform 0.3s; }
+        .concept-card:hover { transform: translateY(-8px); border-color: #e74c3c; }
+
+        .feature-icon { font-size: 48px; margin-bottom: 15px; }
+        .feature-list { list-style: none; padding: 0; }
+        .feature-list li { padding: 12px 0; border-bottom: 1px solid #eee; display: flex; align-items: center; gap: 15px; }
+        .feature-list li:last-child { border-bottom: none; }
+
+        .author-box {
+            background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
+            color: white;
+            padding: 30px;
+            border-radius: 15px;
+            text-align: center;
+            margin-top: 30px;
+        }
+        .author-box h3 { color: white; margin-bottom: 20px; }
+        .author-box p { color: rgba(255,255,255,0.9); margin: 10px 0; }
+
+        .indicators { position: fixed; bottom: 25px; left: 50%; transform: translateX(-50%); display: flex; gap: 12px; z-index: 4000; padding: 10px 25px; background: rgba(0,0,0,0.3); border-radius: 30px; backdrop-filter: blur(5px); }
+        .dot { width: 12px; height: 12px; background: rgba(255,255,255,0.4); border-radius: 50%; cursor: pointer; transition: all 0.3s; }
+        .dot.active { background: #fff; transform: scale(1.3); }
+
+        .flow-diagram {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 20px;
+            flex-wrap: wrap;
+            margin: 30px 0;
+        }
+        .flow-step {
+            background: linear-gradient(135deg, #e74c3c, #c0392b);
+            color: white;
+            padding: 20px 30px;
+            border-radius: 15px;
+            text-align: center;
+            min-width: 150px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+        .flow-step .icon { font-size: 32px; margin-bottom: 10px; }
+        .flow-arrow { font-size: 30px; color: #e74c3c; }
+    </style>
+</head>
+<body>
+
+    <!-- 導航列 -->
+    <div class="nav-bar">
+        <div class="nav-title">Part 1 - 專案介紹與系統概述</div>
+        <div class="nav-buttons">
+            <a href="index.html" class="nav-btn">🏠 首頁</a>
+            <button class="nav-btn" onclick="toggleFullscreen()">🖥️ 全螢幕</button>
+            <a href="https://www.youtube.com/@Liang-yt02" target="_blank" class="nav-btn">🎥 YT</a>
+            <a href="https://www.facebook.com/?locale=zh_TW" target="_blank" class="nav-btn">📘 FB</a>
+        </div>
+    </div>
+
+    <!-- 投影片內容 -->
+    <div class="slide-container">
+
+        <!-- Slide 1: 封面 -->
+        <div class="slide active">
+            <div class="content-card" style="text-align: center; display: flex; flex-direction: column; justify-content: center; align-items: center;">
+                <h4 style="color: #e74c3c; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 10px;">AI 影像辨識與自動化應用</h4>
+                <h1>樂齡防傾倒 LINE Bot 通知系統</h1>
+                <h2 style="border: none; font-weight: normal; font-size: 28px; color: #666; max-width: 800px;">
+                    Part 1：專案介紹與系統概述
+                </h2>
+                <div style="margin-top: 40px; display: flex; gap: 20px;">
+                    <span class="highlight">MediaPipe Pose</span>
+                    <span class="highlight">OpenCV</span>
+                    <span class="highlight">LINE Bot</span>
+                </div>
+                <div class="author-box" style="margin-top: 50px; width: 100%; max-width: 500px;">
+                    <p><strong>製作人：</strong>曾楚庭</p>
+                    <p><strong>指導老師：</strong>曾慶良</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 2: 專案背景 -->
+        <div class="slide">
+            <div class="content-card">
+                <h2>🎯 專案背景與動機</h2>
+                <p>台灣已進入高齡社會，長者跌倒是嚴重的健康風險問題。</p>
+                <div class="concept-grid">
+                    <div class="concept-card">
+                        <div class="feature-icon">👴</div>
+                        <h3>高齡化社會</h3>
+                        <p>65歲以上人口占比持續攀升，長照需求大增</p>
+                    </div>
+                    <div class="concept-card">
+                        <div class="feature-icon">⚠️</div>
+                        <h3>跌倒風險</h3>
+                        <p>跌倒是長者意外傷害的主因，可能導致骨折、失能</p>
+                    </div>
+                    <div class="concept-card">
+                        <div class="feature-icon">⏰</div>
+                        <h3>即時通知</h3>
+                        <p>黃金救援時間關鍵，越早發現越能降低傷害</p>
+                    </div>
+                    <div class="concept-card">
+                        <div class="feature-icon">🤖</div>
+                        <h3>AI 解決方案</h3>
+                        <p>運用 AI 影像辨識技術，實現 24 小時智慧監控</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 3: 系統目標 -->
+        <div class="slide">
+            <div class="content-card">
+                <h2>🎯 系統目標</h2>
+                <div class="box info">
+                    <strong>核心目標：</strong>利用地端攝影機擷取畫面 → 進行骨架辨識 → 計算身體傾斜度 → 若超標 → 自動發送 LINE Bot 警示訊息
+                </div>
+                <div class="flow-diagram">
+                    <div class="flow-step">
+                        <div class="icon">📹</div>
+                        <div>攝影機擷取</div>
+                    </div>
+                    <div class="flow-arrow">→</div>
+                    <div class="flow-step">
+                        <div class="icon">🦴</div>
+                        <div>骨架辨識</div>
+                    </div>
+                    <div class="flow-arrow">→</div>
+                    <div class="flow-step">
+                        <div class="icon">📐</div>
+                        <div>角度計算</div>
+                    </div>
+                    <div class="flow-arrow">→</div>
+                    <div class="flow-step">
+                        <div class="icon">📱</div>
+                        <div>LINE 通知</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 4: 功能特色 -->
+        <div class="slide">
+            <div class="content-card">
+                <h2>✨ 功能特色</h2>
+                <div class="concept-grid">
+                    <div class="concept-card">
+                        <h4>📹 即時影像偵測</h4>
+                        <ul class="feature-list">
+                            <li>✅ 支援 USB 攝影機</li>
+                            <li>✅ 支援 IP 網路攝影機</li>
+                            <li>✅ 10+ FPS 即時處理</li>
+                        </ul>
+                    </div>
+                    <div class="concept-card">
+                        <h4>🦴 AI 骨架辨識</h4>
+                        <ul class="feature-list">
+                            <li>✅ MediaPipe Pose 技術</li>
+                            <li>✅ 33 個人體關鍵點</li>
+                            <li>✅ 即時骨架視覺化</li>
+                        </ul>
+                    </div>
+                    <div class="concept-card">
+                        <h4>📐 智慧判斷</h4>
+                        <ul class="feature-list">
+                            <li>✅ 軀幹傾斜角度計算</li>
+                            <li>✅ 頭部高度監測</li>
+                            <li>✅ 多指標交叉驗證</li>
+                        </ul>
+                    </div>
+                    <div class="concept-card">
+                        <h4>📱 LINE 通知</h4>
+                        <ul class="feature-list">
+                            <li>✅ Flex Message 美觀卡片</li>
+                            <li>✅ 自動截圖傳送</li>
+                            <li>✅ 嚴重程度標示</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 5: 防誤判機制 -->
+        <div class="slide">
+            <div class="content-card">
+                <h2>🛡️ 防誤判機制</h2>
+                <p>系統設計多重防護機制，避免誤報造成困擾：</p>
+                <div class="concept-grid">
+                    <div class="concept-card">
+                        <div class="feature-icon">🔄</div>
+                        <h3>連續幀確認</h3>
+                        <p>需連續 <code>5 幀</code> 偵測到異常才觸發警報，避免瞬間誤判</p>
+                    </div>
+                    <div class="concept-card">
+                        <div class="feature-icon">✅</div>
+                        <h3>多指標驗證</h3>
+                        <p>至少 <code>2 個條件</code> 同時成立才觸發，提高準確度</p>
+                    </div>
+                    <div class="concept-card">
+                        <div class="feature-icon">⏱️</div>
+                        <h3>冷卻時間</h3>
+                        <p>觸發後 <code>30 秒</code> 內不重複通知，避免連續轟炸</p>
+                    </div>
+                </div>
+                <div class="box success">
+                    <strong>校準功能：</strong>站立時按 <code>c</code> 鍵可校準基準線，讓系統更精準判斷。
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 6: 使用技術 -->
+        <div class="slide">
+            <div class="content-card">
+                <h2>🔧 使用技術</h2>
+                <div class="concept-grid">
+                    <div class="concept-card">
+                        <div class="feature-icon">🐍</div>
+                        <h3>Python</h3>
+                        <p>主要開發語言，3.8+ 版本</p>
+                    </div>
+                    <div class="concept-card">
+                        <div class="feature-icon">📷</div>
+                        <h3>OpenCV</h3>
+                        <p>影像擷取與處理</p>
+                    </div>
+                    <div class="concept-card">
+                        <div class="feature-icon">🤖</div>
+                        <h3>MediaPipe</h3>
+                        <p>Google 開源人體姿態估計</p>
+                    </div>
+                    <div class="concept-card">
+                        <div class="feature-icon">💬</div>
+                        <h3>LINE Messaging API</h3>
+                        <p>即時推播通知</p>
+                    </div>
+                </div>
+                <div class="box info">
+                    <strong>環境需求：</strong>Windows 10/11、macOS 或 Linux，需有攝影機與網路連線。
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 7: 總結 -->
+        <div class="slide">
+            <div class="content-card" style="text-align: center;">
+                <h2>📝 Part 1 總結</h2>
+                <p style="font-size: 24px; margin-bottom: 30px;">本單元介紹了樂齡防傾倒系統的背景、目標與功能特色</p>
+                <div class="concept-grid" style="max-width: 800px; margin: 0 auto;">
+                    <div class="concept-card">
+                        <h3>✅ 已了解</h3>
+                        <ul style="text-align: left;">
+                            <li>專案背景與動機</li>
+                            <li>系統運作流程</li>
+                            <li>核心功能特色</li>
+                            <li>使用的技術棧</li>
+                        </ul>
+                    </div>
+                    <div class="concept-card">
+                        <h3>➡️ 下一步</h3>
+                        <ul style="text-align: left;">
+                            <li>Part 2：系統架構解析</li>
+                            <li>Part 3：環境安裝設定</li>
+                            <li>Part 4：LINE Bot 設定</li>
+                            <li>Part 5：執行與操作</li>
+                        </ul>
+                    </div>
+                </div>
+                <div style="margin-top: 40px;">
+                    <a href="Part2_系統架構.html" class="nav-btn" style="background: #e74c3c; padding: 15px 40px; font-size: 18px; border-radius: 30px;">
+                        前往 Part 2 →
+                    </a>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- 導航箭頭 -->
+    <button class="nav-arrow prev-arrow" id="prevBtn" onclick="changeSlide(-1)">❮</button>
+    <button class="nav-arrow next-arrow" id="nextBtn" onclick="changeSlide(1)">❯</button>
+
+    <!-- 頁碼指示器 -->
+    <div class="indicators" id="indicatorContainer"></div>
+
+    <script>
+        let currentSlide = 0;
+        const slides = document.querySelectorAll('.slide');
+        const totalSlides = slides.length;
+
+        function init() {
+            createIndicators();
+            showSlide(0);
+            updateButtons();
+            document.addEventListener('keydown', handleKeydown);
+        }
+
+        function handleKeydown(e) {
+            if (e.key === 'ArrowLeft') changeSlide(-1);
+            if (e.key === 'ArrowRight') changeSlide(1);
+        }
+
+        function createIndicators() {
+            const container = document.getElementById('indicatorContainer');
+            container.innerHTML = '';
+            slides.forEach((_, index) => {
+                const dot = document.createElement('div');
+                dot.className = 'dot';
+                dot.onclick = () => goToSlide(index);
+                container.appendChild(dot);
+            });
+        }
+
+        function showSlide(index) {
+            if (index < 0) index = 0;
+            if (index >= totalSlides) index = totalSlides - 1;
+
+            slides.forEach(slide => slide.classList.remove('active'));
+            slides[index].classList.add('active');
+            currentSlide = index;
+
+            const dots = document.querySelectorAll('.dot');
+            dots.forEach((dot, idx) => {
+                dot.classList.toggle('active', idx === index);
+            });
+
+            updateButtons();
+        }
+
+        function changeSlide(direction) {
+            showSlide(currentSlide + direction);
+        }
+
+        function goToSlide(index) {
+            showSlide(index);
+        }
+
+        function updateButtons() {
+            document.getElementById('prevBtn').disabled = currentSlide === 0;
+            document.getElementById('nextBtn').disabled = currentSlide === totalSlides - 1;
+        }
+
+        function toggleFullscreen() {
+            if (!document.fullscreenElement) {
+                document.documentElement.requestFullscreen();
+            } else {
+                if (document.exitFullscreen) {
+                    document.exitFullscreen();
+                }
+            }
+        }
+
+        init();
+    </script>
+</body>
+</html>
