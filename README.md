@@ -4,6 +4,12 @@
 
 ---
 
+## 系統架構圖
+
+![Fall Detection & LINE Alert System](images/messageImage_1765011433370.jpg)
+
+---
+
 ## 教學簡報
 
 > **製作人：** 曾楚庭 | **指導老師：** 曾慶良
