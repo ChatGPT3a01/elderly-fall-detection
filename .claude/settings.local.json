@@ -4,7 +4,13 @@
       "Bash(dir:*)",
       "Bash(mkdir:*)",
       "Bash(git init:*)",
-      "Bash(git add:*)"
+      "Bash(git add:*)",
+      "Bash(git commit -m \"$(cat <<''EOF''\n初始化：樂齡防傾倒 LINE Bot 通知系統\n\n功能：\n- AI 人體姿態偵測（MediaPipe Pose）\n- 即時傾斜角度計算\n- LINE Bot 警報通知\n- 教學簡報（5 個 Part）\n\n製作人：曾楚庭\n指導老師：曾慶良\nEOF\n)\")",
+      "Bash(gh auth status:*)",
+      "Bash(gh repo create:*)",
+      "Bash(gh api:*)",
+      "Bash(git commit:*)",
+      "Bash(git push:*)"
     ],
     "deny": [],
     "ask": []
