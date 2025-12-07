@@ -1,4 +1,4 @@
-# 樂齡防傾倒 LINE Bot 通知系統
+# 樂齡傾倒偵測 LINE Bot 通知系統
 
 利用地端攝影機擷取畫面，進行骨架辨識（pose estimation），計算身體傾斜度，若超標則自動發送 LINE Bot 警示訊息。
 
